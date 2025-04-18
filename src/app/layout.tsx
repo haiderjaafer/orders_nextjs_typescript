@@ -25,7 +25,7 @@ export default function RootLayout({
     <html lang="ar" dir="rtl">
     <body className={`${arabic.variable} font-sans`}>
       <Navbar />
-      <main className="container py-8">{children}</main>
+      <main className="container py-1">{children}</main>
     </body>
   </html>
   );

@@ -183,17 +183,17 @@ export function Navbar() {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "font-arabic text-sm font-medium px-3 py-2",
+                      "font-arabic text-lg font-extrabold  px-3 py-2",
                       "transition-colors duration-500",
                       "text-foreground hover:text-sky-500"
                     )}
                   >
                     {item.title}
                     <span className={cn(
-                      " mr-1 transform transition-transform duration-300",
+                      "font-extrabold text-lg mr-1 transform transition-transform duration-300",
                       activeSubmenu === item.title ? "rotate-180" : "rotate-0"
                     )}>
-                      ↓
+                      ↑
                     </span>
                   </Button>
                   <div className={cn(
