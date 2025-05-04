@@ -12,7 +12,7 @@ const arabic = Noto_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "تطبيق عربي",
+  title: "نظام متابعة اطلبيات",
   description: "تطبيق مع دعم كامل للغة العربية",
 };
 

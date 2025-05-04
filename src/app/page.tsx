@@ -7,6 +7,7 @@ import { ToastContainer, toast } from 'react-toastify';
 
 import 'react-toastify/dist/ReactToastify.css';
 import debounce from 'lodash.debounce';
+import EstimatorCombobox from '@/components/EstimatorCombobox';
 
 
 export default function Home() {
@@ -55,10 +56,37 @@ export default function Home() {
      checkOrderLink: '',
      userID: ''
    });
+
+
+   const payload = {
+    ...formData,
+    coID: parseInt(formData.coID),
+    deID: parseInt(formData.deID),
+    estimatorID: parseInt(formData.estimatorID),
+    procedureID: parseInt(formData.procedureID),
+    userID: parseInt(formData.userID),
+    checkOrderLink: formData.checkOrderLink === "true", // ✅ FIXED HERE
+    orderDate: convertToISO(formData.orderDate),
+    achievedOrderDate: formData.achievedOrderDate
+      ? convertToISO(formData.achievedOrderDate)
+      : null,
+  };
+
+
+  function convertToISO(dateStr: string): string {
+    const [day, month, year] = dateStr.split("-");
+    return `${year}-${month}-${day}`;
+  }
+  
+  
+  
  
    const [errors, setErrors] = useState({ orderNo: '' });
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [submitMessage, setSubmitMessage] = useState('');
+
+   const [estimators, setEstimators] = useState<{ estimatorID: number; estimatorName: string }[]>([]);
+
  
     // 🟨 Debounced real-time check
   const checkOrderExists = useCallback(
@@ -102,13 +130,22 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    console.log(formData)
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-        credentials: 'include'
+      const res = await fetch("http://localhost:8000/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
       });
+      
+      if (!res.ok) {
+        const errorText = await res.text(); // show actual backend error
+        console.error("Backend error:", errorText);
+        throw new Error("حدث خطأ");
+      }
+      
 
       if (!res.ok) throw new Error('حدث خطأ');
 
@@ -124,6 +161,21 @@ export default function Home() {
       setIsSubmitting(false);
     }
   };
+
+
+  useEffect(() => {
+    const fetchEstimators = async () => {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/estimators'); // Replace with your actual endpoint
+        const data = await res.json();
+        setEstimators(data);
+      } catch (err) {
+        console.error('Failed to fetch estimators:', err);
+      }
+    };
+
+    fetchEstimators();
+  }, []);
 
   return (
     <div className="flex flex-col  items-center justify-center p-4 sm:p-8 font-[family-name:var(--font-geist-sans)]" >
@@ -252,11 +304,12 @@ export default function Home() {
     onChange={handleChange} />
     </div>
 
-    <div className="flex flex-col">
-      <label htmlFor="estimatorID" className="mb-1">اسم المخمن</label>
-      <input type="text" id="estimatorID" className="p-2 border rounded" value={formData.estimatorID} 
-    onChange={handleChange} />
-    </div>
+    <EstimatorCombobox
+  value={formData.estimatorID ? Number(formData.estimatorID) : null}
+  onChange={(val) => setFormData(prev => ({ ...prev, estimatorID: String(val) }))}
+
+/>
+
 
     <div className="flex flex-col">
       <label htmlFor="procedureID" className="mb-1">الاجراء</label>
