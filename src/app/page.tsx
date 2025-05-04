@@ -1,86 +1,193 @@
 "use client"
-import Image from "next/image";
-import { useState } from 'react';
+
+
+
+import { useState, useEffect, useCallback } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+
+import 'react-toastify/dist/ReactToastify.css';
+import debounce from 'lodash.debounce';
 
 
 export default function Home() {
 
-  const [formData, setFormData] = useState({
-    orderNo: '',
-    orderYear: '',
-    orderDate: '',
-    materialName: '',
-    priceRequestedDestination: '',
-    currencyType: '',
-    finalPrice: '',
-    orderType: '',
-    coID: '',
-    deID: '',
-    estimatorID: '',
-    procedureID: '',
-    orderStatus:'',
-    notes: '',
-    achievedOrderDate:'',
-    
-    checkOrderLink:'',
-    userID:''
 
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
+   // Generate years from 2020 to current year + 1 (you can adjust the range)
+   const currentYear = new Date().getFullYear();
+   const years = Array.from({ length: currentYear - 2019 }, (_, i) => 2020 + i);
+ 
+   const orderTypeOptions = [
+     { value: "محلية", label: "محلية" },
+     { value: "محلية-مباشرة", label: "محلية-مباشرة" },
+     { value: "محلية-مخزنية", label: "محلية-مخزنية" },
+     { value: "خارجية-عامة", label: "خارجية-عامة" },
+     { value: "خارجية-احتكارية", label: "خارجية-احتكارية" }
+   ];
+ 
+   const orderStatusOptions = [
+     { value: "قيد الانجاز", label: "قيد الانجاز" },
+     { value: "منجز", label: "منجز" },
+     { value: "الغيت", label: "الغيت" }
+   ];
+ 
+   const currencyOptions = [
+     { value: "دولار امريكي", label: "دولار امريكي (USD)" },
+     { value: "اليورو", label: "اليورو (EUR)" },
+     { value: "دينار عراقي", label: "دينار عراقي" }
+   ];
+ 
+   const [formData, setFormData] = useState({
+     orderNo: '',
+     orderYear: currentYear.toString(),
+     orderDate: '',
+     materialName: '',
+     priceRequestedDestination: '',
+     currencyType: 'دينار عراقي',
+     finalPrice: '',
+     orderType: '',
+     coID: '',
+     deID: '',
+     estimatorID: '',
+     procedureID: '',
+     orderStatus: '',
+     notes: '',
+     achievedOrderDate: '',
+     checkOrderLink: '',
+     userID: ''
+   });
+ 
+   const [errors, setErrors] = useState({ orderNo: '' });
+   const [isSubmitting, setIsSubmitting] = useState(false);
+   const [submitMessage, setSubmitMessage] = useState('');
+ 
+    // 🟨 Debounced real-time check
+  const checkOrderExists = useCallback(
+    debounce(async (orderNo: string, orderYear: string) => {
+      try {
+        const res = await fetch(
+          `http://127.0.0.1:8000/api/orders/check-order-exists?orderNo=${orderNo}&orderYear=${orderYear}`
+        );
+        const data = await res.json();
+        if (data.exists) {
+          toast.warning(`الطلبية برقم ${orderNo} موجودة في سنة ${orderYear}`);
+        }
+      } catch (error) {
+        console.error('Error checking order existence', error);
+      }
+    }, 500),
+    []
+  );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (formData.orderNo && /^\d+$/.test(formData.orderNo)) {
+      checkOrderExists(formData.orderNo, formData.orderYear);
+    }
+  }, [formData.orderNo, formData.orderYear, checkOrderExists]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { id, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [id]: value
-    }));
+
+    if (id === 'orderNo') {
+      if (value === '' || /^\d+$/.test(value)) {
+        setErrors(prev => ({ ...prev, orderNo: '' }));
+        setFormData(prev => ({ ...prev, [id]: value }));
+      } else {
+        setErrors(prev => ({ ...prev, orderNo: 'الرجاء إدخال أرقام فقط' }));
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [id]: value }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting data:", formData);
-  
+    setIsSubmitting(true);
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/orders/add', {
+      const res = await fetch('http://127.0.0.1:8000/api/orders', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
-        credentials: 'include', // Only if using cookies
+        credentials: 'include'
       });
-  
-      if (!response.ok) throw new Error('Request failed');
-  
-      const data = await response.json();
-      console.log('Success:', data);
-      setSubmitMessage('نجاح: الطلبية تم إرسالها');
-    } catch (error) {
-      console.error('Error:', error);
+
+      if (!res.ok) throw new Error('حدث خطأ');
+
+      const data = await res.json();
+      console.log('Submitted:', data);
+      setSubmitMessage('نجاح: تم إرسال الطلبية');
+      toast.success('تم إرسال الطلبية بنجاح');
+    } catch (err) {
+      console.error(err);
       setSubmitMessage('فشل: حدث خطأ أثناء الإرسال');
+      toast.error('فشل في إرسال الطلبية');
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
-
 
   return (
     <div className="flex flex-col  items-center justify-center p-4 sm:p-8 font-[family-name:var(--font-geist-sans)]" >
+
+      {/* Toast container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={true}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
    <label htmlFor="orderYear" className="text-2xl font-medium  text-gray-700 ">صفحة اضافة الطلبيات </label>
    <div className="w-full max-w-6xl mx-auto   ">
    
     <form onSubmit={handleSubmit} className="grid grid-cols-1  sm:grid-cols-2 md:grid-cols-3 gap-2 p-3 bg-white rounded-lg shadow-lg">
 
-    <div className="flex flex-col space-y-1">
-      <label htmlFor="orderNo" className="text-lg font-extrabold text-gray-700">رقم الطلبية</label>
-      <input type="text" id="orderNo" className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.orderNo} 
-    onChange={handleChange} />
-    </div>
-    <div className="flex flex-col space-y-1">
-      <label htmlFor="orderYear" className="text-lg font-extrabold text-gray-700">السنة</label>
-      <input type="number" id="orderYear" className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.orderYear} 
-    onChange={handleChange}  />
-    </div>
+    <div>
+        <label htmlFor="orderNo" className="block font-bold text-gray-700">
+          رقم الطلبية
+        </label>
+        <input
+          id="orderNo"
+          type="text"
+          value={formData.orderNo}
+          onChange={handleChange}
+          className={`w-full p-2 border ${errors.orderNo ? 'border-red-500' : 'border-gray-300'} rounded`}
+        />
+        {errors.orderNo && <p className="text-red-600 text-sm">{errors.orderNo}</p>}
+      </div>
+
+    {/* <div className="flex flex-col space-y-1">
+        <label htmlFor="orderNo" className="text-lg font-extrabold text-gray-700">رقم الطلبية</label>
+        <input 
+          type="text" 
+          id="orderNo" 
+          className={`p-2 border ${errors.orderNo ? 'border-red-500' : 'border-gray-300'} rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500`} 
+          value={formData.orderNo} 
+          onChange={handleChange} 
+        />
+        {errors.orderNo && (
+          <p className="text-red-500 text-sm mt-1">{errors.orderNo}</p>
+        )}
+      </div> */}
+      <div className="flex flex-col space-y-1">
+        <label htmlFor="orderYear" className="text-lg font-extrabold text-gray-700">السنة</label>
+        <select
+          id="orderYear"
+          className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          value={formData.orderYear}
+          onChange={handleChange}
+        >
+          {years.map(year => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+      </div>
     <div className="flex flex-col space-y-1">
       <label htmlFor="orderDate" className="text-lg font-extrabold text-gray-700">تاريخ الطلبية</label>
       <input type="text" id="orderDate" className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.orderDate} 
@@ -97,21 +204,43 @@ export default function Home() {
       <input type="text" id="priceRequestedDestination" className="p-2 border rounded" value={formData.priceRequestedDestination} 
     onChange={handleChange} />
     </div>
-    <div className="flex flex-col">
-      <label htmlFor="currencyType" className="mb-1">العملة</label>
-      <input type="text" id="currencyType" className="p-2 border rounded" value={formData.currencyType} 
-    onChange={handleChange} />
-    </div>
+    <div className="flex flex-col space-y-1">
+        <label htmlFor="currencyType" className="text-lg font-extrabold text-gray-700">العملة</label>
+        <select
+          id="currencyType"
+          className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          value={formData.currencyType}
+          onChange={handleChange}
+        >
+          <option value="" disabled>اختر العملة</option>
+          {currencyOptions.map((currency) => (
+            <option key={currency.value} value={currency.value}>
+              {currency.label}
+            </option>
+          ))}
+        </select>
+      </div>
     <div className="flex flex-col">
       <label htmlFor="finalPrice" className="mb-1">السعر النهائي</label>
       <input type="text" id="finalPrice" className="p-2 border rounded" value={formData.finalPrice} 
     onChange={handleChange} />
     </div>
-    <div className="flex flex-col">
-      <label htmlFor="orderType" className="mb-1">نوع الطلبية</label>
-      <input type="text" id="orderType" className="p-2 border rounded" value={formData.orderType} 
-    onChange={handleChange} />
-    </div>
+    <div className="flex flex-col space-y-1">
+  <label htmlFor="orderType" className="text-lg font-extrabold text-gray-700">نوع الطلبية</label>
+  <select
+    id="orderType"
+    className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    value={formData.orderType}
+    onChange={handleChange}
+  >
+    <option value="" disabled>اختر نوع الطلبية</option>
+    {orderTypeOptions.map((type) => (
+      <option key={type.value} value={type.value}>
+        {type.label}
+      </option>
+    ))}
+  </select>
+</div>
     <div className="flex flex-col">
       <label htmlFor="coID" className="mb-1">الهيأة</label>
       <input type="text" id="coID" className="p-2 border rounded" value={formData.coID} 
@@ -135,11 +264,26 @@ export default function Home() {
     onChange={handleChange}  />
     </div>
 
-    <div className="flex flex-col">
-      <label htmlFor="orderStatus" className="mb-1">حالة الطلبية</label>
-      <input type="text" id="orderStatus" className="p-2 border rounded"  value={formData.orderStatus} 
-    onChange={handleChange}  />
-    </div>
+
+
+    <div className="flex flex-col space-y-1">
+  <label htmlFor="orderStatus" className="text-lg font-extrabold text-gray-700">حالة الطلبية</label>
+  <select
+    id="orderStatus"
+    className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    value={formData.orderStatus}
+    onChange={handleChange}
+  >
+    <option value="" disabled>اختر حالة الطلبية</option>
+    {orderStatusOptions.map((status) => (
+      <option key={status.value} value={status.value}>
+        {status.label}
+      </option>
+    ))}
+  </select>
+</div>
+
+
 
     <div className="flex flex-col">
       <label htmlFor="userID" className="mb-1">userID</label>
