@@ -8,6 +8,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import debounce from 'lodash.debounce';
 import EstimatorCombobox from '@/components/EstimatorCombobox';
+import ComboBoxComponentCommittees from '@/components/ComboBoxCommitteesComponent';
 
 
 export default function Home() {
@@ -84,6 +85,9 @@ export default function Home() {
    const [errors, setErrors] = useState({ orderNo: '' });
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [submitMessage, setSubmitMessage] = useState('');
+
+   const [selectedCommittee, setSelectedCommittee] = useState<string | undefined>(undefined);
+   const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(undefined);
 
    const [estimators, setEstimators] = useState<{ estimatorID: number; estimatorName: string }[]>([]);
 
@@ -176,6 +180,8 @@ export default function Home() {
 
     fetchEstimators();
   }, []);
+
+
 
   return (
     <div className="flex flex-col  items-center justify-center p-4 sm:p-8 font-[family-name:var(--font-geist-sans)]" >
@@ -293,11 +299,29 @@ export default function Home() {
     ))}
   </select>
 </div>
-    <div className="flex flex-col">
-      <label htmlFor="coID" className="mb-1">الهيأة</label>
-      <input type="text" id="coID" className="p-2 border rounded" value={formData.coID} 
-    onChange={handleChange}/>
+
+
+<div className="space-y-4 flex flex-col">
+<label className="font-extrabold text-lg mb-1">الهيأة</label>
+     
+      <ComboBoxComponentCommittees
+        valueType={selectedCommittee}
+        onChange={(value) => {
+          setSelectedCommittee(value);
+          setSelectedDepartment(undefined); // Reset department selection
+        }}
+        fetchUrl="http://127.0.0.1:8000/api/committees"
+      />
+
     </div>
+
+    
+        
+        
+        
+      
+
+
     <div className="flex flex-col">
       <label htmlFor="deID" className="mb-1">القسم</label>
       <input type="text" id="deID" className="p-2 border rounded" value={formData.deID} 
@@ -364,13 +388,18 @@ export default function Home() {
     </div>
 
     <div className="col-span-full flex flex-col items-center mt-6 space-y-4">
+    <p>Selected Committee ID: {selectedCommittee}</p>
+    <p>Selected Department ID: {selectedDepartment}</p>
   <button 
     type="submit" 
     className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed min-w-[150px]"
     disabled={isSubmitting}
   >
     {isSubmitting ? 'جاري الإرسال...' : 'إرسال البيانات'}
+    
   </button>
+
+  
   
   {submitMessage && (
     <p className={`text-sm text-center ${submitMessage.includes('نجاح') ? 'text-green-600' : 'text-red-600'}`}>

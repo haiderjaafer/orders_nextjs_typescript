@@ -165,7 +165,7 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center mx-4 font-arabic">
           <span className="inline-block font-bold text-lg hover:text-sky-500 transition-colors duration-500">
-            شركة التقنية
+            شركة مصافي الوسط
           </span>
         </Link>
 
@@ -243,7 +243,18 @@ export function Navbar() {
         </nav>
 
         {/* Empty div to balance the layout */}
-        <div className="md:w-[72px]"></div>
+       
+        <Link href="/" className="flex items-center mx-4 font-arabic">
+        ,<div className="flex items-center justify-between">
+        <span className=" inline-block font-bold text-lg hover:text-sky-500 transition-colors duration-500">
+          نظام متابعة الطلبيات
+          </span>
+
+         
+        </div>
+        </Link>
+
+        
       </div>
     </header>
   );
