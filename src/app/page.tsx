@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import debounce from 'lodash.debounce';
 import EstimatorCombobox from '@/components/EstimatorCombobox';
 import ComboBoxComponentCommittees from '@/components/ComboBoxCommitteesComponent';
+import ComboBoxComponentDepartment from '@/components/ComboBoxComponentDepartment';
 
 
 export default function Home() {
@@ -17,6 +18,12 @@ export default function Home() {
    // Generate years from 2020 to current year + 1 (you can adjust the range)
    const currentYear = new Date().getFullYear();
    const years = Array.from({ length: currentYear - 2019 }, (_, i) => 2020 + i);
+
+   const [selectedCommittee, setSelectedCommittee] = useState<string | undefined>(undefined);
+   const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(undefined);
+
+   const [estimators, setEstimators] = useState<{ estimatorID: number; estimatorName: string }[]>([]);
+
  
    const orderTypeOptions = [
      { value: "محلية", label: "محلية" },
@@ -47,8 +54,8 @@ export default function Home() {
      currencyType: 'دينار عراقي',
      finalPrice: '',
      orderType: '',
-     coID: '',
-     deID: '',
+     coID: selectedCommittee,
+     deID: selectedDepartment,
      estimatorID: '',
      procedureID: '',
      orderStatus: '',
@@ -61,23 +68,36 @@ export default function Home() {
 
    const payload = {
     ...formData,
-    coID: parseInt(formData.coID),
-    deID: parseInt(formData.deID),
+    coID: selectedCommittee ? parseInt(selectedCommittee) : null,
+    deID: selectedDepartment ? parseInt(selectedDepartment) : null,
     estimatorID: parseInt(formData.estimatorID),
     procedureID: parseInt(formData.procedureID),
     userID: parseInt(formData.userID),
-    checkOrderLink: formData.checkOrderLink === "true", // ✅ FIXED HERE
-    orderDate: convertToISO(formData.orderDate),
+    checkOrderLink: formData.checkOrderLink === "true",
+    orderDate: safeConvertToISO(formData.orderDate),
     achievedOrderDate: formData.achievedOrderDate
-      ? convertToISO(formData.achievedOrderDate)
+      ? safeConvertToISO(formData.achievedOrderDate)
       : null,
   };
+  
 
 
-  function convertToISO(dateStr: string): string {
-    const [day, month, year] = dateStr.split("-");
+  
+
+
+  function safeConvertToISO(dateStr: string): string {
+    // Acceptable input: "DD-MM-YYYY"
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return dateStr;
+  
+    const [day, month, year] = parts;
+    if (year.length !== 4 || isNaN(+day) || isNaN(+month) || isNaN(+year)) {
+      return dateStr; // Don't change it; let backend validate
+    }
+  
     return `${year}-${month}-${day}`;
   }
+  
   
   
   
@@ -86,18 +106,15 @@ export default function Home() {
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [submitMessage, setSubmitMessage] = useState('');
 
-   const [selectedCommittee, setSelectedCommittee] = useState<string | undefined>(undefined);
-   const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(undefined);
-
-   const [estimators, setEstimators] = useState<{ estimatorID: number; estimatorName: string }[]>([]);
-
+  
  
     // 🟨 Debounced real-time check
   const checkOrderExists = useCallback(
     debounce(async (orderNo: string, orderYear: string) => {
       try {
         const res = await fetch(
-          `http://127.0.0.1:8000/api/orders/check-order-exists?orderNo=${orderNo}&orderYear=${orderYear}`
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/orders/check-order-exists?orderNo=${orderNo}&orderYear=${orderYear}`
+          
         );
         const data = await res.json();
         if (data.exists) {
@@ -137,7 +154,7 @@ export default function Home() {
 
     console.log(formData)
     try {
-      const res = await fetch("http://localhost:8000/api/orders", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -170,7 +187,7 @@ export default function Home() {
   useEffect(() => {
     const fetchEstimators = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/estimators'); // Replace with your actual endpoint
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/estimators`); // Replace with your actual endpoint
         const data = await res.json();
         setEstimators(data);
       } catch (err) {
@@ -304,29 +321,37 @@ export default function Home() {
 <div className="space-y-4 flex flex-col">
 <label className="font-extrabold text-lg mb-1">الهيأة</label>
      
-      <ComboBoxComponentCommittees
-        valueType={selectedCommittee}
-        onChange={(value) => {
-          setSelectedCommittee(value);
-          setSelectedDepartment(undefined); // Reset department selection
-        }}
-        fetchUrl="http://127.0.0.1:8000/api/committees"
-      />
+<ComboBoxComponentCommittees
+  valueType={selectedCommittee}
+  onChange={(value) => {
+    setSelectedCommittee(value);
+    setSelectedDepartment(undefined);
+  }}
+  fetchUrl={`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/committees`}
+/>
+
 
     </div>
 
     
         
         
-        
+    <div className="space-y-4 flex flex-col">
+<label className="font-extrabold text-lg mb-1">القسم</label>
+   
       
+    <ComboBoxComponentDepartment
+  valueType={selectedDepartment}
+  onChange={(value) => setSelectedDepartment(value)}
+  fetchUrl={`http://127.0.0.1:8000/api/departments/by-committee/${selectedCommittee}`}
+/>
+</div>
 
-
-    <div className="flex flex-col">
+    {/* <div className="flex flex-col">
       <label htmlFor="deID" className="mb-1">القسم</label>
       <input type="text" id="deID" className="p-2 border rounded" value={formData.deID} 
     onChange={handleChange} />
-    </div>
+    </div> */}
 
     <EstimatorCombobox
   value={formData.estimatorID ? Number(formData.estimatorID) : null}
