@@ -10,6 +10,8 @@ import debounce from 'lodash.debounce';
 import EstimatorCombobox from '@/components/EstimatorCombobox';
 import ComboBoxComponentCommittees from '@/components/ComboBoxCommitteesComponent';
 import ComboBoxComponentDepartment from '@/components/ComboBoxComponentDepartment';
+import { DatePicker } from '@/components/ui/date-picker';
+import { format } from 'date-fns';
 
 
 export default function Home() {
@@ -23,6 +25,12 @@ export default function Home() {
    const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(undefined);
 
    const [estimators, setEstimators] = useState<{ estimatorID: number; estimatorName: string }[]>([]);
+
+   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+   const [selectedOrderDate, setSelectedOrderDate] = useState<string | null>(null);
+
+   const [procedures, setProcedures] = useState<{ procedureID: number; procedureName: string }[]>([]);
 
  
    const orderTypeOptions = [
@@ -48,7 +56,7 @@ export default function Home() {
    const [formData, setFormData] = useState({
      orderNo: '',
      orderYear: currentYear.toString(),
-     orderDate: '',
+     orderDate: selectedOrderDate,
      materialName: '',
      priceRequestedDestination: '',
      currencyType: 'دينار عراقي',
@@ -60,10 +68,13 @@ export default function Home() {
      procedureID: '',
      orderStatus: '',
      notes: '',
-     achievedOrderDate: '',
+     achievedOrderDate: selectedDate,
      checkOrderLink: '',
-     userID: ''
+     userID: '1'  // ✅ default as string for consistency
+
    });
+
+   console.log("formData" ,formData);
 
 
    const payload = {
@@ -72,15 +83,20 @@ export default function Home() {
     deID: selectedDepartment ? parseInt(selectedDepartment) : null,
     estimatorID: parseInt(formData.estimatorID),
     procedureID: parseInt(formData.procedureID),
-    userID: parseInt(formData.userID),
-    checkOrderLink: formData.checkOrderLink === "true",
-    orderDate: safeConvertToISO(formData.orderDate),
-    achievedOrderDate: formData.achievedOrderDate
-      ? safeConvertToISO(formData.achievedOrderDate)
-      : null,
+    //userID: parseInt(formData.userID ) ,
+    userID:1,
+
+    checkOrderLink: formData.checkOrderLink === "false",
+
+    // orderDate: formData.orderDate
+    //   ? safeConvertToISO(formData.orderDate)
+    //   : null,
+
+    // achievedOrderDate: formData.achievedOrderDate
+    //   ? safeConvertToISO(formData.achievedOrderDate)
+    //   : null,
   };
   
-
 
   
 
@@ -198,6 +214,40 @@ export default function Home() {
     fetchEstimators();
   }, []);
 
+  
+
+  const handleDateChangeOrderDate = (date: Date) => {
+    const formattedDate = format(date, "yyyy-MM-dd");
+    console.log("formattedDate", formattedDate);
+    setFormData(prev => ({
+      ...prev,
+      orderDate: formattedDate
+    }));
+  };
+  
+  
+  const handleDateChangeAchievedOrderDate = (date: Date) => {
+    console.log("Selected date:", date);
+    // You can set this date to state or use it as needed
+    const formattedDate = format(date, "yyyy-MM-dd");
+
+    setFormData(prev => ({
+      ...prev,
+      achievedOrderDate: formattedDate
+    }));
+  };
+
+
+  
+
+useEffect(() => {
+  fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/procedures`)
+    .then((res) => res.json())
+    .then((data) => setProcedures(data))
+    .catch((err) => console.error("Failed to fetch procedures:", err));
+}, []);
+
+
 
 
   return (
@@ -263,11 +313,24 @@ export default function Home() {
           ))}
         </select>
       </div>
-    <div className="flex flex-col space-y-1">
+
+
+      <div className="flex flex-col">
+      
+      <label  htmlFor="orderDate" className="mb-1" >تأريخ الطلبية</label>
+      <DatePicker onDateChange={handleDateChangeOrderDate}  />
+      {/* <h2 className="my-4">{selectedDate}</h2> */}
+      </div>
+
+
+    {/* <div className="flex flex-col space-y-1">
       <label htmlFor="orderDate" className="text-lg font-extrabold text-gray-700">تاريخ الطلبية</label>
       <input type="text" id="orderDate" className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.orderDate} 
     onChange={handleChange}  />
-    </div>
+    </div> */}
+
+
+
     <div className="flex flex-col">
       <label htmlFor="materialName" className="mb-1">اسم المادة</label>
       <input type="text" id="materialName" className="p-2 border rounded" value={formData.materialName} 
@@ -360,11 +423,33 @@ export default function Home() {
 />
 
 
-    <div className="flex flex-col">
+
+<div className="flex flex-col">
+  <label htmlFor="procedureID" className="mb-1">الاجراء</label>
+  <select
+    id="procedureID"
+    className="p-2 border rounded"
+    value={formData.procedureID}
+    onChange={(e) =>
+      setFormData((prev) => ({ ...prev, procedureID: e.target.value }))
+    }
+  >
+    <option value="">اختر إجراء</option>
+    {procedures.map((proc) => (
+      <option key={proc.procedureID} value={proc.procedureID}>
+        {proc.procedureName}
+      </option>
+    ))}
+  </select>
+</div>
+
+
+
+    {/* <div className="flex flex-col">
       <label htmlFor="procedureID" className="mb-1">الاجراء</label>
       <input type="text" id="procedureID" className="p-2 border rounded"  value={formData.procedureID} 
     onChange={handleChange}  />
-    </div>
+    </div> */}
 
 
 
@@ -387,11 +472,11 @@ export default function Home() {
 
 
 
-    <div className="flex flex-col">
+    {/* <div className="flex flex-col">
       <label htmlFor="userID" className="mb-1">userID</label>
       <input type="text" id="userID" className="p-2 border rounded"  value={formData.userID} 
     onChange={handleChange}  />
-    </div>
+    </div> */}
 
     <div className="flex flex-col">
       <label htmlFor="notes" className="mb-1">الملاحظات</label>
@@ -399,18 +484,26 @@ export default function Home() {
     onChange={handleChange} />
     </div>
 
+
     <div className="flex flex-col">
+      
+      <label  htmlFor="achievedOrderDate" className="mb-1" >تأريخ الانجاز</label>
+      <DatePicker onDateChange={handleDateChangeAchievedOrderDate}  />
+      {/* <h2 className="my-4">{selectedDate}</h2> */}
+      </div>
+
+    {/* <div className="flex flex-col">
       <label htmlFor="achievedOrderDate" className="mb-1">تاريخ الانجاز</label>
       <input type="text" id="achievedOrderDate" className="p-2 border rounded"  value={formData.achievedOrderDate} 
     onChange={handleChange} />
-    </div>
+    </div> */}
 
     
-    <div className="flex flex-col">
+    {/* <div className="flex flex-col">
       <label htmlFor="checkOrderLink" className="mb-1">هل يوجد ارتباط</label>
       <input type="text" id="checkOrderLink" className="p-2 border rounded"  value={formData.checkOrderLink} 
     onChange={handleChange} />
-    </div>
+    </div> */}
 
     <div className="col-span-full flex flex-col items-center mt-6 space-y-4">
     <p>Selected Committee ID: {selectedCommittee}</p>
