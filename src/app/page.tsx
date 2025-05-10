@@ -12,9 +12,16 @@ import ComboBoxComponentCommittees from '@/components/ComboBoxCommitteesComponen
 import ComboBoxComponentDepartment from '@/components/ComboBoxComponentDepartment';
 import { DatePicker } from '@/components/ui/date-picker';
 import { format } from 'date-fns';
+import { MaterialNameDialog } from '@/components/MaterialNameDialog';
+import MaterialNameInput from '@/components/MaterialNameInput';
+import { OrderFormData } from '@/types';
+import NoteComponent from '@/components/notesDialog/NoteComponent';
 
 
 export default function Home() {
+
+
+  
 
 
    // Generate years from 2020 to current year + 1 (you can adjust the range)
@@ -53,26 +60,25 @@ export default function Home() {
      { value: "دينار عراقي", label: "دينار عراقي" }
    ];
  
-   const [formData, setFormData] = useState({
-     orderNo: '',
-     orderYear: currentYear.toString(),
-     orderDate: selectedOrderDate,
-     materialName: '',
-     priceRequestedDestination: '',
-     currencyType: 'دينار عراقي',
-     finalPrice: '',
-     orderType: '',
-     coID: selectedCommittee,
-     deID: selectedDepartment,
-     estimatorID: '',
-     procedureID: '',
-     orderStatus: '',
-     notes: '',
-     achievedOrderDate: selectedDate,
-     checkOrderLink: '',
-     userID: '1'  // ✅ default as string for consistency
-
-   });
+const [formData, setFormData] = useState<OrderFormData>({
+    orderNo: '',
+    orderYear: currentYear.toString(),
+    orderDate: selectedOrderDate ?? '',
+    materialName: '',
+    priceRequestedDestination: '',
+    currencyType: 'دينار عراقي',
+    finalPrice: '',
+    orderType: '',
+    coID: selectedCommittee ?? '',
+    deID: selectedDepartment ?? '',
+    estimatorID: '',
+    procedureID: '',
+    orderStatus: '',
+    notes: '',
+    achievedOrderDate: selectedDate ?? '',
+    checkOrderLink: '',
+    userID: '1',
+  });
 
    console.log("formData" ,formData);
 
@@ -193,7 +199,8 @@ export default function Home() {
     } catch (err) {
       console.error(err);
       setSubmitMessage('فشل: حدث خطأ أثناء الإرسال');
-      toast.error('فشل في إرسال الطلبية');
+      // toast.error('فشل في إرسال الطلبية');
+      toast.warning(`الطلبية برقم ${formData.orderNo} موجودة في سنة ${formData.orderYear}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -329,13 +336,19 @@ useEffect(() => {
     onChange={handleChange}  />
     </div> */}
 
+      <MaterialNameInput formData={formData} setFormData={setFormData} />
 
 
-    <div className="flex flex-col">
+
+{/* <MaterialNameDialog formData={formData} setFormData={setFormData} /> */}
+
+     
+
+    {/* <div className="flex flex-col">
       <label htmlFor="materialName" className="mb-1">اسم المادة</label>
       <input type="text" id="materialName" className="p-2 border rounded" value={formData.materialName} 
     onChange={handleChange} />
-    </div>
+    </div> */}
     {/* Add more fields as needed */}
     <div className="flex flex-col">
       <label htmlFor="priceRequestedDestination" className="mb-1">سعر الجهة الطالبة</label>
@@ -478,11 +491,13 @@ useEffect(() => {
     onChange={handleChange}  />
     </div> */}
 
-    <div className="flex flex-col">
+    {/* <div className="flex flex-col">
       <label htmlFor="notes" className="mb-1">الملاحظات</label>
       <input type="text" id="notes" className="p-2 border rounded"  value={formData.notes} 
     onChange={handleChange} />
-    </div>
+    </div> */}
+
+    <NoteComponent formData={formData} setFormData={setFormData} />
 
 
     <div className="flex flex-col">
