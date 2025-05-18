@@ -20,7 +20,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       {
         title: "إضافة  طلبية",
-        href: "/add/product",
+        href: "/add/orders",
         description: "إضافة طلبية جديدة إلى النظام",
       },
       {
@@ -39,14 +39,14 @@ const NAV_ITEMS: NavItem[] = [
     title: "البحث",
     children: [
       {
-        title: "بحث عن المنتجات",
-        href: "/search/products",
-        description: "البحث في كافة المنتجات المتاحة",
+        title: "رقم طلبية",
+        href: "/search/orders",
+        description: "البحث عن طريق رقم الطليية  ",
       },
       {
-        title: "بحث عن العملاء",
-        href: "/search/customers",
-        description: "البحث في سجلات العملاء",
+        title: "اسم المادة",
+        href: "/search/materialName",
+        description: "البحث عن طريق اسم المادة",
       },
       {
         title: "بحث متقدم",

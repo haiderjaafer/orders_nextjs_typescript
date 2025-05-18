@@ -30,3 +30,5 @@ export default function RootLayout({
   </html>
   );
 }
+
+//npm install @tanstack/react-table --legacy-peer-deps
