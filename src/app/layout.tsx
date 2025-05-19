@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Arabic } from "next/font/google";
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
@@ -26,6 +27,19 @@ export default function RootLayout({
     <body className={`${arabic.variable} font-sans`}>
       <Navbar />
       <main className="container py-1">{children}</main>
+       {/* Toast container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={true}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </body>
   </html>
   );

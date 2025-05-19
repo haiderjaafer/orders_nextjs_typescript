@@ -1,7 +1,6 @@
 "use client"
 import { useState, useEffect, useCallback } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import {  toast } from 'react-toastify';
 import debounce from 'lodash.debounce';
 import EstimatorCombobox from '@/components/EstimatorCombobox';
 import { ComboBoxComponentCommittees } from '@/components/companyStructure/ComboBoxCommitteesComponent';
@@ -11,6 +10,7 @@ import { format } from 'date-fns';
 import MaterialNameInput from '@/components/materialNameComponent/MaterialNameInput';
 import { OrderFormData } from '@/types';
 import NoteComponent from '@/components/notesDialog/NoteComponent';
+import { orderSchema } from '@/orderSchema';
 
 
 
@@ -52,6 +52,7 @@ export default function AddOrders() {
      { value: "دينار عراقي", label: "دينار عراقي" }
    ];
  
+
 const [formData, setFormData] = useState<OrderFormData>({
     orderNo: '',
     orderYear: currentYear.toString(),
@@ -88,109 +89,97 @@ const [formData, setFormData] = useState<OrderFormData>({
 
  
   };
-  
+    
 
-  
-
-
-  function safeConvertToISO(dateStr: string): string {
-    // Acceptable input: "DD-MM-YYYY"
-    const parts = dateStr.split("-");
-    if (parts.length !== 3) return dateStr;
-  
-    const [day, month, year] = parts;
-    if (year.length !== 4 || isNaN(+day) || isNaN(+month) || isNaN(+year)) {
-      return dateStr; // Don't change it; let backend validate
-    }
-  
-    return `${year}-${month}-${day}`;
-  }
-  
-  
-  
-  
- 
    const [errors, setErrors] = useState({ orderNo: '' });
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [submitMessage, setSubmitMessage] = useState('');
 
-  
- 
-    // 🟨 Debounced real-time check
-  const checkOrderExists = useCallback(
-    debounce(async (orderNo: string, orderYear: string) => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/orders/check-order-exists?orderNo=${orderNo}&orderYear=${orderYear}`
-          
-        );
-        const data = await res.json();
-        if (data.exists) {
-          toast.warning(`الطلبية برقم ${orderNo} موجودة في سنة ${orderYear}`);
-        }
-      } catch (error) {
-        console.error('Error checking order existence', error);
-      }
-    }, 500),
-    []
-  );
 
-  useEffect(() => {
-    if (formData.orderNo && /^\d+$/.test(formData.orderNo)) {
-      checkOrderExists(formData.orderNo, formData.orderYear);
-    }
-  }, [formData.orderNo, formData.orderYear, checkOrderExists]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { id, value } = e.target;
 
-    if (id === 'orderNo') {
-      if (value === '' || /^\d+$/.test(value)) {
-        setErrors(prev => ({ ...prev, orderNo: '' }));
-        setFormData(prev => ({ ...prev, [id]: value }));
-      } else {
-        setErrors(prev => ({ ...prev, orderNo: 'الرجاء إدخال أرقام فقط' }));
-      }
+
+   
+
+const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { id, value } = e.target;
+
+  if (id === 'orderNo') {
+    if (value === '' || /^\d+$/.test(value)) {  // numbers only
+      setErrors(prev => ({ ...prev, orderNo: '' }));
+      setFormData(prev => {
+        const updated = { ...prev, [id]: value };
+        debouncedCheck(updated.orderNo, updated.orderYear); // ✅ Use debounce here only
+        return updated;
+      });
     } else {
-      setFormData(prev => ({ ...prev, [id]: value }));
+      setErrors(prev => ({ ...prev, orderNo: 'الرجاء إدخال أرقام فقط' }));
     }
-  };
+  } else {
+    setFormData(prev => ({ ...prev, [id]: value }));
+  }
+};
+
+
+
+// real time check 
+const debouncedCheck = debounce(async (orderNo: string, orderYear: string) => {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/orders/check-order-exists?orderNo=${orderNo}&orderYear=${orderYear}`
+    );
+    const data = await res.json();
+    if (data.exists) {
+      toast.warning(`الطلبية برقم ${orderNo} موجودة في سنة ${orderYear}`);
+    }
+  } catch (error) {
+    console.error('Error checking order existence', error);
+  }
+}, 500);
+
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  e.preventDefault();
+  setIsSubmitting(true);
 
-    console.log(formData)
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/orders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-      
-      if (!res.ok) {
-        const errorText = await res.text(); // show actual backend error
-        console.error("Backend error:", errorText);
-        throw new Error("حدث خطأ");
-      }
-      
+  const validation = orderSchema.safeParse(formData);
 
-      if (!res.ok) throw new Error('حدث خطأ');
+  if (!validation.success) {
+    const messages = validation.error.errors.map(err => err.message).join("\n");
 
-      const data = await res.json();
-      console.log('Submitted:', data);
-      setSubmitMessage('نجاح: تم إرسال الطلبية');
-      toast.success('تم إرسال الطلبية بنجاح');
-    } catch (err) {
-      console.error(err);
-      setSubmitMessage('فشل: حدث خطأ أثناء الإرسال');
-      // toast.error('فشل في إرسال الطلبية');
-      toast.warning(`الطلبية برقم ${formData.orderNo} موجودة في سنة ${formData.orderYear}`);
-    } finally {
-      setIsSubmitting(false);
+    toast.error(`الحقول المطلوبة غير مكتملة:\n${messages}`);
+    setIsSubmitting(false);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(formData),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Backend error:", errorText);
+      throw new Error("حدث خطأ");
     }
-  };
+
+    const data = await res.json();
+    console.log("Submitted:", data);
+    setSubmitMessage("نجاح: تم إرسال الطلبية");
+    toast.success("تم إرسال الطلبية بنجاح");
+  } catch (err) {
+    console.error(err);
+    setSubmitMessage("فشل: حدث خطأ أثناء الإرسال");
+    toast.warning(`الطلبية برقم ${formData.orderNo} موجودة في سنة ${formData.orderYear}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
 
   useEffect(() => {
@@ -246,19 +235,7 @@ useEffect(() => {
   return (
     <div className="flex flex-col  items-center justify-center p-4 sm:p-8 font-[family-name:var(--font-geist-sans)]" >
 
-      {/* Toast container */}
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={true}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
+     
    <label htmlFor="orderYear" className="text-2xl font-medium  text-gray-700 ">صفحة اضافة الطلبيات </label>
    <div className="w-full max-w-6xl mx-auto   ">
    

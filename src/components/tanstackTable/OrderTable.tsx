@@ -43,7 +43,7 @@ export function OrderTable({ orderNo }: Props) {
   return (
     <div className="w-full overflow-x-auto">
       <Button onClick={fetchOrders} disabled={!orderNo || loading}>
-        {loading ? "جارٍ التحميل..." : "عرض الطلبات"}
+        {loading ? "جارٍ التحميل..." : "عرض الطلبيات"}
       </Button>
 
       <div className="min-w-[1000px] w-full border text-center">
