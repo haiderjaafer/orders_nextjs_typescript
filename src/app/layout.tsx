@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
+import { Providers } from "./providers";
 
 const arabic = Noto_Sans_Arabic({ 
   subsets: ["arabic"],
@@ -26,7 +27,12 @@ export default function RootLayout({
     <html lang="ar" dir="rtl">
     <body className={`${arabic.variable} font-sans`}>
       <Navbar />
-      <main className="container py-1">{children}</main>
+      <main className="container py-1">
+        
+        <Providers>{children}</Providers>
+        
+        
+        </main>
        {/* Toast container */}
       <ToastContainer
         position="top-right"
@@ -46,3 +52,4 @@ export default function RootLayout({
 }
 
 //npm install @tanstack/react-table --legacy-peer-deps
+// npm install --force

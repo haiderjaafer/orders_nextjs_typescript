@@ -5,7 +5,10 @@
 // }
 // export default page
 
-import DynamicTable, { orderHeaderMap, TableData } from "@/components/tast_Table";
+import DynamicTable from "@/components/DynamicTableTanStack/DynamicTableComponent";
+import { orderHeaderMap, TableData } from "@/components/DynamicTableTanStack/types";
+
+
 
 
 
@@ -13,33 +16,31 @@ import DynamicTable, { orderHeaderMap, TableData } from "@/components/tast_Table
 export default function OrdersPage() {
   const orders: TableData[] = [
     {
-      id: 1,
-      orderNo: "ORD001",
-      orderDate: "2025-05-20",
-      price: 99.99,
-      orderStatus: "Shipped",
-      CurrencyType:"دولار",
-      Notes:"kkkkkkkkkzdvdlvkdlvcx/.v,cx/.v,xc/.v,cx/.v,c./v,c.v/",
+      id: "1",
+  orderID: "1",
+  orderNo: "123123",
+  orderYear: "2025",
+  orderDate: "2025-04-08",
+  orderType: "خارجية-احتكارية",
+  coID: "6",
+  deID: "40",
+  materialName: "مواد احتياطية مضخات وحدة الازمرة",
+  estimatorID: "11",
+  procedureID: "1",
+  orderStatus: "منجز",
+  notes: "تم زيادة قيمه الكلفه التخمنية من قبل القسم الطالب ثم اعادة الينا بعد رفع الكلفه الى قسم الخدمات الهندسية بتاريخ 2-11-202اعيدت الى التخمين بتاريخ 16-11-2022",
+  achievedOrderDate: "2025-05-09",
+  priceRequestedDestination: "330,000,000",
+  finalPrice: "700,000,000",
+  currencyType: "دولار امريكي",
+  cunnrentDate: "2025-01-22",
+  color: "GREEN",
+  checkOrderLink: "False",
+  userID: "2",
 
     },
-    {
-      id: 2,
-      orderNo: "ORD002",
-      orderDate: "2025-05-21",
-      price: 149.99,
-      orderStatus: "Pending",
-      CurrencyType:"يورو",
-      Notes:"zfSDOFd[spfoDp[volcx;'vLC;x'VLC:<VC,vc/. b,vc /b.c<Vgpfdokgfdogfg",
-    },
-     {
-      id: 3,
-      orderNo: "ORD003",
-      orderDate: "2025-05-21",
-      price: 149.99,
-      orderStatus: "Pending",
-      CurrencyType:"دولار امريكي",
-      Notes:"asdarsdfkdl;vkxcl;vkfdgdfogkfogfkgofkgflgkflgkfglfkglfkgfbv",
-    },
+ 
+  
   ];
 
   return (
