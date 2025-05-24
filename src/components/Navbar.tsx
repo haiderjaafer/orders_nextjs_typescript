@@ -50,7 +50,7 @@ const NAV_ITEMS: NavItem[] = [
       },
       {
         title: "بحث متقدم",
-        href: "/search/advanced",
+        href: "/dynmicTableWithPagination/",
         description: "خيارات البحث المتقدم مع فلاتر متعددة",
       },
     ],

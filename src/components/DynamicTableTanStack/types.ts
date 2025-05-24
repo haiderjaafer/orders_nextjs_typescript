@@ -1,15 +1,23 @@
 import { JSX } from "react";
 
-export type TableData = Record<string, any>;
+import { ColumnDef } from "@tanstack/react-table";
 
-export type HeaderMap = Record<string, string>;
+// Define the base TableData type
+export interface TableData {
+  [key: string]: any;
+}
 
-// Explicitly type ColumnDef with accessorKey for TypeScript safety
-export type AccessorColumnDef<T> = {
-  accessorKey: keyof T & string;
+// Extend ColumnDef to include size and other properties
+export type AccessorColumnDef<T extends TableData> = ColumnDef<T> & {
+  accessorKey: string;
   header: string;
-  cell: (props: { row: { getValue: (key: string) => any } }) => JSX.Element;
+  size?: number; // Explicitly include size
 };
+
+// HeaderMap for mapping field names to display names
+export interface HeaderMap {
+  [key: string]: string;
+}
 
 
 

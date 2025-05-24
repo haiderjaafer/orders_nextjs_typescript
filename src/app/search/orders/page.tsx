@@ -1,32 +1,8 @@
-// "use client"
-// import ComboBoxOrderNoComponent from "@/components/ComboBoxOrderNoComponent";
-// import { OrderTable } from "@/components/tanstackTable/OrderTable";
-// import React, { useState } from "react";
 
-
-
-// export default function Home() {
-//   const [selectedOrderNo, setSelectedOrderNo] = useState("");
-
-//   return(
-//     <div>
-//    <div>{selectedOrderNo}</div>
-//   <ComboBoxOrderNoComponent
-//         value={selectedOrderNo}
-//         onChange={(value) => setSelectedOrderNo(value)} // Must be a function
-//         fetchUrl="http://127.0.0.1:8000/api/orders/getAll"
-//       />
-    
-//      <OrderTable orderNo={selectedOrderNo} />
-
-//     </div>
-//   )
-
-// }
 
 
 // app/orders/page.tsx
-"use client";
+ "use client";
 
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -35,9 +11,9 @@ import { Button } from "@/components/ui/button";
 
 import ComboBoxOrderNoComponent from "@/components/ComboBoxOrderNoComponent";
 import axios from "axios";
-import { Order, orderHeaderMap } from "@/components/DynamicTableTanStack/types";
+ import { Order, orderHeaderMap } from "@/components/DynamicTableTanStack/types";
 
-// Dynamically import DynamicTable with SSR disabled
+//Dynamically import DynamicTable with SSR disabled
 const DynamicTable = dynamic(() => import("@/components/DynamicTableTanStack/DynamicTableComponent"), {
   ssr: false,
 });
@@ -73,10 +49,10 @@ export default function OrdersPage() {
           <ComboBoxOrderNoComponent
             value={selectedOrderNo}
             onChange={(value) => setSelectedOrderNo(value)}
-            fetchUrl="http://127.0.0.1:8000/api/orders/getAll"
+            fetchUrl="http://127.0.0.1:8000/api/orders/getAllForComobox"
           />
-        </div>
-        <Button
+         </div>
+         <Button
           onClick={handleSearch}
           disabled={!selectedOrderNo || isLoading}
           className="w-full sm:w-auto"
@@ -97,3 +73,7 @@ export default function OrdersPage() {
     </div>
   );
 }
+
+
+
+
